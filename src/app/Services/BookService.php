@@ -45,18 +45,15 @@ class BookService
     public function getBooks(array $params): array
     {
         try {
-            // First, try to get data from the database
-            // $dbResults = $this->repository->getBooks($params);
+            $cacheKey = 'nyt_' . md5(json_encode($params));
+            $cacheTtl = config('services.nyt.cache_ttl', 60);
 
-            // If we have results in the database, return them
-            // if (!empty($dbResults['results'])) {
-            //     return $dbResults;
-            // }
+            $response = cache()->remember($cacheKey, now()->addMinutes($cacheTtl), function () use ($params) {
 
-            // Otherwise, fetch from the NYT API
-            $queryParams = $this->buildQueryParams($params);
+                $queryParams = $this->buildQueryParams($params);
 
-            $response = $this->httpService->get('/books/v3/lists/best-sellers/history.json', $queryParams);
+                return $this->httpService->get('/books/v3/lists/best-sellers/history.json', $queryParams);
+            });
 
             if ($response->failed()) {
                 Log::error('NYT API request failed', [

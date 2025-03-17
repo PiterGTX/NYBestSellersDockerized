@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\Api2\V1\BookController;
+use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BookController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -15,10 +17,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// NYT Best Sellers API
+Route::prefix('v1')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
 });
 
-// NYT Best Sellers API
-Route::get('/best-sellers', [BookController::class, 'bestSellers'])
-    ->name('api.best-sellers.index');
+Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
+    Route::get('user', [UserController::class, 'show']);
+    Route::get('/best-sellers', [BookController::class, 'bestSellers'])->name('api.best-sellers.index');
+});
